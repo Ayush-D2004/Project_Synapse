@@ -1,0 +1,5 @@
+# Ignore Python virtual environment and config files
+.env
+synapse/
+__pycache__/
+*.pyc
