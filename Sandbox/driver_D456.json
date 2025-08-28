@@ -1,0 +1,6 @@
+{
+  "driver_id": "D456",
+  "status": "waiting_at_merchant",
+  "current_task": "order_123",
+  "location": "Merchant M789"
+}

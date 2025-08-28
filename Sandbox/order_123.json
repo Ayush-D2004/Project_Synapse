@@ -1,0 +1,7 @@
+{
+  "order_id": "123",
+  "customer_id": "C123",
+  "merchant_id": "M789",
+  "status": "preparing",
+  "driver_id": "D456"
+}
