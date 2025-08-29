@@ -3,3 +3,4 @@
 synapse/
 __pycache__/
 *.pyc
+.vscode/

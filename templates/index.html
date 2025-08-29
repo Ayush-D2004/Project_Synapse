@@ -40,7 +40,7 @@
 
         /* Sidebar Styles */
         .sidebar {
-            width: 30%;
+            width: 28%;
             background: #abedc96b;
             border-right: 2px solid var(--grab-light-gray);
             padding: 0px;
@@ -87,17 +87,19 @@
         .info-section {
             flex: 1;
             overflow-y: auto;
+            padding-top: 24px;
         }
 
         .info-card {
             /* background: var(--grab-light-green); */
+            margin-top: 18px;
             padding: 20px;
             margin-bottom: 20px;
         }
 
         .info-card h3 {
             color: var(--grab-dark-green);
-            font-size: 16px;
+            font-size: 20px;
             font-weight: 600;
             margin-bottom: 12px;
             display: flex;
@@ -107,7 +109,7 @@
 
         .info-card p {
             color: var(--grab-medium-gray);
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1.5;
             margin-bottom: 12px;
         }
@@ -119,7 +121,7 @@
 
         .capabilities-list li {
             color: var(--grab-medium-gray);
-            font-size: 12px;
+            font-size: 13px;
             margin: 8px 0;
             padding-left: 20px;
             position: relative;
@@ -142,7 +144,7 @@
 
         .scenarios-list li {
             color: var(--grab-medium-gray);
-            font-size: 11px;
+            font-size: 13px;
             font-style: italic;
             margin: 6px 0;
             padding: 4px 8px;
@@ -158,28 +160,26 @@
         }
 
         .clear-btn {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
             background: linear-gradient(135deg, var(--grab-red) 0%, #D32F2F 100%);
             color: var(--grab-white);
             border: none;
-            border-radius: 50%;
-            font-size: 18px;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 16px;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
-            z-index: 1000;
+            min-width: 48px;
+            height: 48px;
+            box-shadow: 0 2px 8px rgba(255, 87, 34, 0.2);
         }
 
         .clear-btn:hover {
-            transform: translateY(-3px) scale(1.1);
-            box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+            background: linear-gradient(135deg, #D32F2F 0%, var(--grab-red) 100%);
         }
 
         /* Main Chat Area */
@@ -196,21 +196,14 @@
             padding: 20px 32px;
             display: flex;
             align-items: center;
+            list-style-type: none;
             gap: 12px;
             box-shadow: 0 2px 10px rgba(0, 177, 79, 0.2);
         }
 
         .chat-header h1 {
-            font-size: 20px;
+            font-size: 25px;
             font-weight: 600;
-        }
-
-        .status-indicator {
-            width: 8px;
-            height: 8px;
-            background: #4CAF50;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
@@ -224,6 +217,16 @@
             overflow-y: auto;
             padding: 24px 32px;
             padding-bottom: 120px;
+            background-image: url("{{ url_for('static', filename='GRAB_whitegray.jpg') }}");
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+
+        .chat-container > * {
+            position: relative;
+            z-index: 1;
         }
 
         .message {
@@ -349,15 +352,15 @@
         .input-area {
             position: fixed;
             bottom: 0;
-            left: 35%;
+            left: 28%;
             right: 0;
-            background: linear-gradient(to top, var(--grab-white) 0%, var(--grab-white) 90%, transparent 100%);
             padding: 20px 32px;
+            z-index: 9999;
         }
 
         .input-container {
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             gap: 12px;
             max-width: 100%;
         }
@@ -521,12 +524,6 @@
     <div class="container">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="logo-section">
-                <img src="{{ url_for('static', filename='GRAB.jpg') }}" alt="Grab Logo" class="logo">
-            </div>
-
-            <div class="divider"></div>
-
             <div class="info-section">
                 <div class="info-card">
                     <h3><i class="fas fa-brain"></i> Enhanced Capabilities</h3>
@@ -543,10 +540,10 @@
                 <div class="info-card">
                     <h3><i class="fas fa-lightbulb"></i> Try Different Scenarios</h3>
                     <div class="scenarios-list">
-                        <li onclick="setMessage('My food was spilled during delivery')">• 'My food was spilled during delivery'</li>
-                        <li onclick="setMessage('Driver is very late, where is my order?')">• 'Driver is very late, where is my order?'</li>
-                        <li onclick="setMessage('Wrong items delivered, this isn\'t what I ordered')">• 'Wrong items delivered, this isn't what I ordered'</li>
-                        <li onclick="setMessage('Driver says delivered but I never received it')">• 'Driver says delivered but I never received it'</li>
+                        <li onclick="setMessage('My food was spilled during delivery')">'My food was spilled during delivery'</li>
+                        <li onclick="setMessage('Driver is very late, where is my order?')">'Driver is very late, where is my order?'</li>
+                        <li onclick="setMessage('Wrong items delivered, this isn\'t what I ordered')">'Wrong items delivered, this isn't what I ordered'</li>
+                        <li onclick="setMessage('Driver says delivered but I never received it')">'Driver says delivered but I never received it'</li>
                     </div>
                 </div>
             </div>
@@ -555,7 +552,6 @@
         <!-- Main Content -->
         <div class="main-content">
             <div class="chat-header">
-                <div class="status-indicator"></div>
                 <span class="heading">Synapse Assistant<span>
             </div>
 
@@ -582,14 +578,12 @@
                     <button type="submit" class="input-btn send-btn" id="sendBtn">
                         <i class="fas fa-paper-plane"></i>
                     </button>
+                    <button type="button" class="input-btn clear-btn" onclick="clearConversation()" title="Clear Conversation">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                     <input type="file" id="imageInput" class="file-input" accept="image/*">
                 </form>
             </div>
-
-            <!-- Clear Conversation Button -->
-            <button class="clear-btn" onclick="clearConversation()" title="Clear Conversation">
-                <i class="fas fa-trash-alt"></i>
-            </button>
         </div>
     </div>
 

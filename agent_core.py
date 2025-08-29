@@ -8,6 +8,9 @@ from langchain.agents import initialize_agent, AgentType
 from config import load_api_key
 from tools import (
     collect_evidence, 
+    ask_for_order_details,
+    provide_generic_solution,
+    analyze_customer_situation,
     issue_instant_refund, 
     exonerate_driver, 
     log_merchant_packaging_feedback,
@@ -22,7 +25,11 @@ from tools import (
     analyze_gps_data,
     check_weather_conditions,
     verify_customer_identity,
-    log_incident_report
+    log_incident_report,
+    analyze_order_discrepancy,
+    assess_refund_eligibility,
+    check_merchant_substitution_policy,
+    validate_customer_complaint
 )
 
 # Load the API key
@@ -37,9 +44,19 @@ llm = ChatGoogleGenerativeAI(
 # 2. Define the list of tools 
 tools = [
     Tool(
-        name="collect_evidence",
-        func=collect_evidence,
-        description="Collect comprehensive evidence including photos, timestamps, GPS data, and statements from customer and driver. Use this first for any dispute."
+        name="analyze_customer_situation",
+        func=analyze_customer_situation,
+        description="Analyze if the customer has provided enough information to proceed with a solution. Use this to check if you can help them now or need more details."
+    ),
+    Tool(
+        name="provide_generic_solution",
+        func=provide_generic_solution,
+        description="Provide an immediate solution for the customer's issue. Use this when you have enough information about their problem (wrong order, late delivery, quality issue, etc.)"
+    ),
+    Tool(
+        name="ask_for_order_details",
+        func=ask_for_order_details,
+        description="Ask for missing order information only when absolutely necessary. Use sparingly - customers don't like repeating themselves."
     ),
     Tool(
         name="check_customer_history",
@@ -112,6 +129,26 @@ tools = [
         description="Create detailed incident report for future analysis. Input: incident_type,details,involved_parties"
     ),
     Tool(
+        name="analyze_order_discrepancy",
+        func=analyze_order_discrepancy,
+        description="Analyze specific order to identify what went wrong. Input: order_id (use 'ORD_001' if not known)"
+    ),
+    Tool(
+        name="assess_refund_eligibility", 
+        func=assess_refund_eligibility,
+        description="Assess customer's eligibility for refund. Input: 'customer_id,order_id,amount' or just 'refund_assessment' for defaults"
+    ),
+    Tool(
+        name="check_merchant_substitution_policy",
+        func=check_merchant_substitution_policy,
+        description="Check merchant's policy on item substitutions and alternatives. Input: merchant_id,original_item"
+    ),
+    Tool(
+        name="validate_customer_complaint",
+        func=validate_customer_complaint,
+        description="Validate customer complaint against order history and delivery records. Input: complaint_details (e.g., 'received wrong order')"
+    ),
+    Tool(
         name="escalate_to_human",
         func=escalate_to_human,
         description="Escalate complex cases to human agents. Input: reason,urgency_level,case_summary"
@@ -133,47 +170,31 @@ agent = initialize_agent(
     return_intermediate_steps=True, 
     agent_kwargs={
         "system_message": """
-        You are "Synapse," Grab's advanced AI customer service agent specializing in ride-hailing and food/grocery delivery disputes.
-        You are empathetic, analytical, and solution-oriented, capable of handling complex multi-party scenarios.
+        You are a helpful customer service agent for Grab. Your goal is to resolve customer issues QUICKLY and DECISIVELY.
 
-        Your Core Capabilities:
-        - Comprehensive evidence gathering and analysis
-        - Historical pattern recognition for customers, drivers, and merchants
-        - Real-time tracking and communication coordination
-        - Fair dispute resolution with business impact consideration
-        - Proactive problem prevention and quality improvement
+        🎯 GOLDEN RULES:
+        1. **Don't over-ask for details** - If customer says "I ordered pizza, got burger, paid ₹400" that's ENOUGH to help them!
+        2. **Provide solutions immediately** - Use provide_generic_solution as soon as you understand their issue
+        3. **Stop asking for order IDs** - Not every customer remembers their order ID, and that's okay
+        4. **Be solution-focused** - Customers want help, not interrogation
 
-        Your Decision-Making Framework:
-        1. GATHER INTELLIGENCE: Always start by collecting evidence and checking histories of all parties involved
-        2. ANALYZE CONTEXT: Consider weather, traffic, merchant preparation times, and other external factors
-        3. VERIFY CLAIMS: Cross-reference customer statements with driver reports, GPS data, and merchant logs
-        4. ASSESS FAULT: Determine responsibility fairly based on comprehensive evidence
-        5. RESOLVE APPROPRIATELY: Choose the most suitable resolution that satisfies the customer while protecting business interests
-        6. PREVENT RECURRENCE: Log feedback and patterns to improve system-wide quality
+        🚀 WORKFLOW:
+        1. Customer describes issue → Analyze if you have enough info
+        2. If basic details present (what they ordered, what went wrong, rough amount) → Provide solution immediately
+        3. Only ask for more details if the issue is completely unclear
 
-        Resolution Hierarchy (in order of preference):
-        1. Service recovery with vouchers/credits (maintain customer loyalty, lower cost)
-        2. Partial refunds with future incentives
-        3. Full refunds (only when clearly justified)
-        4. Escalation to human agents (complex or sensitive cases)
+        ⚠️ AVOID:
+        - Asking for the same information multiple times
+        - Saying "order not found in system" (just help them anyway!)
+        - Requesting unnecessary details like exact timestamps
+        - Being bureaucratic or robotic
 
-        Communication Style:
-        - Begin with empathy and understanding
-        - Explain your investigation process clearly
-        - Be transparent about findings and reasoning
-        - Offer solutions that feel generous while being cost-effective
-        - Always explain next steps and prevention measures
+        💡 EXAMPLES OF SUFFICIENT INFO:
+        ✅ "I ordered pizza but got burger, paid ₹400" → Provide solution now!
+        ✅ "Food was cold, order from ABC restaurant" → Provide solution now!
+        ✅ "Wrong order delivered, cost ₹500" → Provide solution now!
 
-        Special Scenarios to Handle:
-        - Food safety issues (immediate escalation protocol)
-        - Driver safety concerns (priority handling)
-        - Repeat offenders (pattern-based responses)
-        - High-value customers (enhanced service recovery)
-        - Weather-related delays (proactive communication)
-        - Technical app issues (system-level solutions)
-
-        If image evidence is provided, analyze it thoroughly as part of your investigation.
-        Always document your findings for continuous improvement of Grab's service quality.
+        Remember: Happy customers matter more than perfect documentation. Be generous with refunds and solutions!
         """
     }
 )

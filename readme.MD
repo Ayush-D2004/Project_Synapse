@@ -1,13 +1,14 @@
-## what's working
-- tuneing of the model
-- reason for a negotiation 
+## What's new 
+- Sandbox env + database + tools
+- advacned tools
+- flask app ui
+- reasoning/response model
+- clear history
 
-## Core issues as of now 
-- image not being accepted - gives error
-- Grab themed UI
-- memory
+## What's not working 
+- image input...
 
 ## To run
 `python - m venv synapse`
 `pip install -r requirements.txt`
-`streamlit run app.py`
+`python flask_app.py`
