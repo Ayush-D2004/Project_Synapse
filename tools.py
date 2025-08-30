@@ -62,37 +62,46 @@ Please provide these details so I can assist you properly."""
 
 def analyze_customer_situation(customer_message: str) -> str:
     """
-    Analyze what the customer has told us and determine if we can proceed with a solution
+    Analyze what the customer has told us and always recommend proceeding with a solution
     """
     print(f"--- Analyzing Customer Situation: {customer_message} ---")
     
     # Extract key information from the customer's message
     message_lower = customer_message.lower()
     
-    # Check for order details
-    has_items = any(item in message_lower for item in ["pizza", "burger", "food", "order", "item"])
-    has_amount = any(money in message_lower for money in ["400", "rupees", "rs", "paid"])
-    has_restaurant = any(rest in message_lower for rest in ["abc kitchen", "restaurant", "kitchen"])
-    has_issue = any(issue in message_lower for issue in ["wrong", "received", "instead", "got"])
+    # Classify severity level
+    if any(critical in message_lower for critical in ["spilled", "damaged", "spoiled", "inedible"]):
+        severity = "CRITICAL"
+        impact = "Food completely unusable"
+        solution_type = "Full refund + compensation"
+    elif any(high in message_lower for high in ["wrong", "missing", "cold", "bad quality"]):
+        severity = "HIGH" 
+        impact = "Service failure affecting customer experience"
+        solution_type = "Full refund + voucher"
+    elif any(medium in message_lower for medium in ["late", "delay", "slow"]):
+        severity = "MEDIUM"
+        impact = "Time inconvenience"
+        solution_type = "Partial refund + voucher"
+    else:
+        severity = "STANDARD"
+        impact = "General service issue"
+        solution_type = "Appropriate compensation"
     
-    if has_items and has_amount and has_issue:
-        return f"""SITUATION ANALYSIS:
-        
-✅ SUFFICIENT INFORMATION PROVIDED:
-• Customer complaint: Clear issue described
-• Order details: {has_items and 'Items mentioned' or 'Need item details'}
-• Payment amount: {has_amount and 'Amount provided' or 'Need amount'}
-• Issue type: {has_issue and 'Problem clearly stated' or 'Need issue details'}
+    # Always recommend proceeding with solution
+    return f"""✅ PROBLEM ANALYSIS COMPLETE:
 
-RECOMMENDATION: Proceed with solution - customer has provided enough details to resolve this."""
-    
-    return """INFORMATION STATUS:
-    
-❌ INSUFFICIENT INFORMATION:
-• Need more specific details to proceed
-• Recommend asking for missing information
+🎯 Issue: {customer_message}
+🚨 Severity: {severity}
+📊 Impact: {impact}
+💰 Solution: {solution_type}
 
-RECOMMENDATION: Request additional details before proceeding."""
+🚀 RECOMMENDATION: PROCEED WITH IMMEDIATE SOLUTION
+• Customer has provided sufficient context
+• Clear service failure identified  
+• No additional details needed
+• Time to resolve and compensate
+
+NEXT ACTION: Use provide_generic_solution to fix this issue now!"""
 
 def ask_for_order_details(context: str) -> str:
     """Ask the customer for specific order details to better assist them"""
@@ -474,3 +483,301 @@ def escalate_to_human(escalation_request: str) -> str:
         return f"Case escalated to human agent. Priority: {urgency}. Reason: {reason}. Case summary provided. Expected response time: {'30 minutes' if urgency == 'high' else '2 hours' if urgency == 'medium' else '24 hours'}."
     except:
         return "Case escalated to human agent team for specialized handling."
+
+def check_traffic(location: str, route: str = "") -> str:
+    """Check current traffic conditions for a specific location and route."""
+    print(f"--- Checking Traffic Conditions: {location} ---")
+    
+    # Simulate traffic conditions
+    traffic_conditions = [
+        f"Traffic Status for {location}: Light traffic, normal flow. Expected delivery time on schedule.",
+        f"Traffic Status for {location}: Moderate congestion detected. +5-8 minutes delay expected.",
+        f"Traffic Status for {location}: Heavy traffic due to construction. +15-20 minutes delay likely.",
+        f"Traffic Status for {location}: Severe congestion - accident reported. +25-30 minutes delay. Rerouting recommended.",
+        f"Traffic Status for {location}: Road closure in effect. Alternative route required. +10-15 minutes delay."
+    ]
+    
+    route_info = f" Route: {route}" if route else ""
+    
+    return f"{random.choice(traffic_conditions)}{route_info}\n\nRecommendation: {'Consider alternative routes' if 'Heavy' in traffic_conditions[-1] or 'Severe' in traffic_conditions[-1] else 'Current route optimal'}"
+
+def get_merchant_status(merchant_id: str) -> str:
+    """Get current operational status of a specific merchant."""
+    print(f"--- Checking Merchant Status: {merchant_id} ---")
+    
+    if SANDBOX_AVAILABLE:
+        # Try to get merchant from sandbox
+        try:
+            merchant_data = sandbox_db.get_merchant(merchant_id)
+            if merchant_data:
+                prep_time = random.choice([8, 12, 15, 18, 25])
+                queue_length = random.choice([2, 5, 8, 12, 15])
+                
+                return f"""Merchant Status - {merchant_data['name']}:
+• Operational Status: OPEN
+• Current Queue: {queue_length} orders
+• Average Prep Time: {prep_time} minutes
+• Quality Rating: {merchant_data['rating']}/5.0
+• Cuisine: {merchant_data['cuisine_type']}
+• Location: {merchant_data['address']}
+• Special Notes: {'Rush hour - slight delays expected' if queue_length > 10 else 'Normal operations'}"""
+        except:
+            pass
+    
+    # Fallback status options
+    statuses = [
+        f"Merchant {merchant_id}: OPEN - Normal operations, 8-12 min prep time, 3 orders in queue",
+        f"Merchant {merchant_id}: BUSY - High demand, 15-20 min prep time, 8 orders in queue", 
+        f"Merchant {merchant_id}: SLOW - Kitchen delays, 20-25 min prep time, 12 orders in queue",
+        f"Merchant {merchant_id}: TEMPORARILY CLOSED - Kitchen maintenance, reopening in 30 minutes",
+        f"Merchant {merchant_id}: LIMITED MENU - Some items unavailable, normal prep times"
+    ]
+    
+    return random.choice(statuses)
+
+def reroute_driver(driver_id: str, new_route: str) -> str:
+    """Reroute driver to avoid traffic or optimize delivery path."""
+    print(f"--- Rerouting Driver {driver_id}: {new_route} ---")
+    
+    # Simulate route optimization
+    original_eta = random.randint(12, 25)
+    optimized_eta = max(8, original_eta - random.randint(3, 8))
+    distance_saved = round(random.uniform(0.5, 2.3), 1)
+    
+    return f"""Driver Rerouting Successful:
+• Driver ID: {driver_id}
+• New Route: {new_route}
+• Original ETA: {original_eta} minutes
+• Optimized ETA: {optimized_eta} minutes
+• Time Saved: {original_eta - optimized_eta} minutes
+• Distance Saved: {distance_saved} km
+• Route Status: Driver notified and navigation updated
+• Customer Notification: Auto-sent with updated delivery time"""
+
+def get_nearby_merchants(location: str, cuisine_type: str = "") -> str:
+    """Find nearby merchants based on location and cuisine preference."""
+    print(f"--- Finding Nearby Merchants: {location}, Cuisine: {cuisine_type} ---")
+    
+    if SANDBOX_AVAILABLE:
+        try:
+            # Get merchants from sandbox
+            merchants = []
+            for merchant in sandbox_db.merchants.values():
+                if not cuisine_type or cuisine_type.lower() in merchant['cuisine_type'].lower():
+                    distance = round(random.uniform(0.3, 3.5), 1)
+                    eta = random.randint(15, 35)
+                    merchants.append(f"• {merchant['name']} - {merchant['cuisine_type']} ({distance}km, ~{eta}min delivery)")
+            
+            if merchants:
+                return f"Nearby Merchants in {location}:\n" + "\n".join(merchants[:5])
+        except:
+            pass
+    
+    # Fallback merchant suggestions
+    cuisine_filter = f" ({cuisine_type})" if cuisine_type else ""
+    
+    sample_merchants = [
+        f"• Spice Garden{cuisine_filter} - 0.8km away, ~20min delivery, 4.5★",
+        f"• Quick Bites Express{cuisine_filter} - 1.2km away, ~15min delivery, 4.3★", 
+        f"• Golden Fork Restaurant{cuisine_filter} - 1.5km away, ~25min delivery, 4.7★",
+        f"• Street Food Corner{cuisine_filter} - 0.5km away, ~12min delivery, 4.2★",
+        f"• Fusion Kitchen{cuisine_filter} - 2.1km away, ~30min delivery, 4.6★"
+    ]
+    
+    return f"Nearby Merchants in {location}:\n" + "\n".join(random.sample(sample_merchants, min(4, len(sample_merchants))))
+
+def initiate_mediation_flow(order_id: str) -> str:
+    """Start mediation process between customer, merchant, and driver for complex disputes."""
+    print(f"--- Initiating Mediation Flow: {order_id} ---")
+    
+    if SANDBOX_AVAILABLE:
+        try:
+            order_data = sandbox_db.get_order(order_id)
+            if order_data:
+                customer_id = order_data['customer_id'] 
+                merchant_id = order_data['merchant_id']
+                driver_id = order_data.get('driver_id', 'TBD')
+                
+                return f"""Mediation Process Initiated for Order {order_id}:
+
+📋 CASE DETAILS:
+• Customer: {customer_id}
+• Merchant: {merchant_id} 
+• Driver: {driver_id}
+• Order Value: ₹{order_data['total_amount']}
+• Issue Type: Complex dispute requiring mediation
+
+🔄 MEDIATION WORKFLOW:
+1. ✅ All parties notified
+2. ⏳ Evidence collection (24hr window)
+3. ⏳ Review by mediation specialist
+4. ⏳ Resolution conference (if needed)
+5. ⏳ Final decision & compensation
+
+📞 CONTACT ASSIGNED:
+• Mediation Specialist: Sarah Chen
+• Case Number: MED-{random.randint(1000,9999)}
+• Expected Resolution: 48-72 hours
+• All parties will receive updates via SMS/email"""
+        except:
+            pass
+    
+    return f"""Mediation Flow Initiated for Order {order_id}:
+• Case escalated to mediation team
+• All parties (customer, merchant, driver) will be contacted
+• Evidence review period: 24 hours
+• Mediation specialist assigned
+• Expected resolution: 48-72 hours
+• Case reference: MED-{random.randint(1000,9999)}"""
+
+def find_nearby_locker(location: str) -> str:
+    """Find nearby Grab lockers for self-pickup or alternative delivery."""
+    print(f"--- Finding Nearby Lockers: {location} ---")
+    
+    # Simulate locker locations
+    locker_options = [
+        f"📍 GrabLocker @ Central Mall, {location}",
+        f"📍 GrabLocker @ Metro Station Plaza, {location}", 
+        f"📍 GrabLocker @ Office Complex Hub, {location}",
+        f"📍 GrabLocker @ University Campus, {location}",
+        f"📍 GrabLocker @ Residential Tower, {location}"
+    ]
+    
+    selected_lockers = random.sample(locker_options, min(3, len(locker_options)))
+    
+    locker_details = []
+    for i, locker in enumerate(selected_lockers):
+        distance = round(random.uniform(0.2, 1.8), 1)
+        available_slots = random.randint(3, 15)
+        walk_time = random.randint(2, 8)
+        
+        locker_details.append(f"{locker}\n  • Distance: {distance}km ({walk_time}min walk)\n  • Available Slots: {available_slots}\n  • Operating Hours: 6:00 AM - 11:00 PM")
+    
+    return f"""Nearby GrabLockers in {location}:
+
+{chr(10).join(locker_details)}
+
+💡 LOCKER BENEFITS:
+• No delivery fee for locker pickup
+• 24-hour pickup window
+• SMS notification when order arrives
+• Contactless pickup with QR code
+• Secure temperature-controlled storage
+
+Would you like me to redirect your order to one of these lockers?"""
+
+def orchestrate_resolution_plan(issue_details: str) -> str:
+    """Create and execute a comprehensive multi-step resolution plan with proactive problem detection."""
+    print(f"--- Orchestrating Resolution Plan: {issue_details} ---")
+    
+    details_lower = issue_details.lower()
+    
+    # Advanced issue classification with severity scoring
+    severity_score = 0
+    issue_type = "general"
+    emotional_indicators = []
+    
+    # Critical issues (100 points)
+    if any(critical in details_lower for critical in ["spilled", "poisoned", "allergic", "sick", "emergency"]):
+        severity_score = 100
+        issue_type = "critical_failure"
+    
+    # High severity (75 points)
+    elif any(high in details_lower for high in ["wrong order", "missing", "damaged", "terrible", "awful", "disgusted"]):
+        severity_score = 75
+        issue_type = "major_service_failure"
+    
+    # Medium severity (50 points)
+    elif any(medium in details_lower for medium in ["cold", "late", "delayed", "poor quality", "disappointed"]):
+        severity_score = 50
+        issue_type = "quality_issue"
+    
+    # Low severity (25 points)
+    else:
+        severity_score = 25
+        issue_type = "minor_concern"
+    
+    # Detect emotional indicators
+    if any(anger in details_lower for anger in ["angry", "furious", "outraged", "disgusted"]):
+        emotional_indicators.append("high_anger")
+        severity_score += 15
+    elif any(frustration in details_lower for frustration in ["frustrated", "annoyed", "disappointed"]):
+        emotional_indicators.append("frustration")
+        severity_score += 10
+    
+    # Detect repeat customer signals
+    if any(repeat in details_lower for repeat in ["again", "always", "every time", "repeatedly"]):
+        emotional_indicators.append("repeat_issue")
+        severity_score += 20
+    
+    # Create dynamic resolution plan
+    plan_steps = []
+    compensation_level = "standard"
+    
+    if severity_score >= 90:
+        compensation_level = "premium_plus"
+        plan_steps = [
+            "🚨 IMMEDIATE ESCALATION: Critical service failure detected",
+            "💳 Full refund + 200% compensation credit",
+            "🎁 Premium customer care package",
+            "📞 Personal follow-up call within 2 hours",
+            "🛡️ Quality assurance investigation",
+            "📊 Executive team notification"
+        ]
+    elif severity_score >= 70:
+        compensation_level = "premium"
+        plan_steps = [
+            "⚡ HIGH PRIORITY: Major service failure acknowledged", 
+            "💳 Full refund + 150% compensation credit",
+            "🚀 Immediate reorder (if applicable)",
+            "📧 Personal apology from management",
+            "🔍 Root cause analysis",
+            "📈 Process improvement review"
+        ]
+    elif severity_score >= 45:
+        compensation_level = "enhanced"
+        plan_steps = [
+            "🎯 STANDARD RESOLUTION: Quality issue identified",
+            "💳 Full refund + 100% compensation credit", 
+            "🎁 Future order discount voucher",
+            "📝 Merchant feedback submission",
+            "📊 Quality monitoring alert"
+        ]
+    else:
+        compensation_level = "basic"
+        plan_steps = [
+            "✅ QUICK RESOLUTION: Minor concern addressed",
+            "💳 Partial refund or service credit",
+            "🎫 Goodwill voucher",
+            "📋 Standard feedback logging"
+        ]
+    
+    emotional_response = ""
+    if "high_anger" in emotional_indicators:
+        emotional_response = "\n🤝 EMOTIONAL SUPPORT: Extra empathy protocols activated - customer anger management approach"
+    elif "frustration" in emotional_indicators:
+        emotional_response = "\n😊 CUSTOMER CARE: Frustration acknowledged - enhanced communication mode"
+    
+    if "repeat_issue" in emotional_indicators:
+        emotional_response += "\n🔄 REPEAT CUSTOMER ALERT: Pattern detected - priority handling + retention measures"
+    
+    return f"""🧠 ADVANCED RESOLUTION ORCHESTRATION:
+
+🎯 ISSUE CLASSIFICATION:
+• Severity Score: {severity_score}/100
+• Issue Type: {issue_type.replace('_', ' ').title()}
+• Compensation Level: {compensation_level.replace('_', ' ').title()}
+• Emotional Indicators: {', '.join(emotional_indicators) if emotional_indicators else 'None detected'}
+
+📋 MULTI-STEP EXECUTION PLAN:
+{chr(10).join([f'{i+1}. {step}' for i, step in enumerate(plan_steps)])}
+
+{emotional_response}
+
+🚀 PROACTIVE MEASURES:
+• Real-time merchant notification
+• Driver performance review (if applicable)  
+• Customer satisfaction follow-up scheduled
+• Quality improvement recommendation generated
+
+✅ EXECUTION STATUS: Plan activated - all steps proceeding simultaneously for fastest resolution."""

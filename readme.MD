@@ -1,12 +1,9 @@
 ## What's new 
 - Sandbox env + database + tools
 - advacned tools
+- image processing
+- advanced reasoning/response model
 - flask app ui
-- reasoning/response model
-- clear history
-
-## What's not working 
-- image input...
 
 ## To run
 `python - m venv synapse`
