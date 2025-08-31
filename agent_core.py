@@ -36,7 +36,8 @@ from tools import (
     get_nearby_merchants,
     initiate_mediation_flow,
     find_nearby_locker,
-    orchestrate_resolution_plan
+    orchestrate_resolution_plan,
+    analyze_image_evidence
 )
 
 # Load the API key
@@ -184,6 +185,11 @@ tools = [
         name="find_nearby_locker",
         func=find_nearby_locker,
         description="Find nearby Grab lockers for alternative pickup when delivery issues occur. Input: location"
+    ),
+    Tool(
+        name="analyze_image_evidence",
+        func=analyze_image_evidence,
+        description="Analyze uploaded image evidence from customer to validate complaints and support resolution decisions. Use when customer has provided photo evidence. Input: image_context"
     ),
     Tool(
         name="orchestrate_resolution_plan",

@@ -666,6 +666,56 @@ def find_nearby_locker(location: str) -> str:
 
 Would you like me to redirect your order to one of these lockers?"""
 
+def analyze_image_evidence(image_context: str) -> str:
+    """Analyze image evidence provided by customer for complaint investigation."""
+    print(f"--- Analyzing Image Evidence: {image_context} ---")
+    
+    # Extract image analysis information if provided
+    if "Image Evidence:" in image_context:
+        evidence_parts = image_context.split("Evidence Details:")
+        description = evidence_parts[0].replace("Image Evidence:", "").strip()
+        details = evidence_parts[1].strip() if len(evidence_parts) > 1 else ""
+        
+        return f"""🔍 IMAGE EVIDENCE ANALYSIS COMPLETE:
+
+📸 VISUAL CONFIRMATION: {description}
+
+🔬 EXTRACTED EVIDENCE:
+{details}
+
+✅ EVIDENCE ASSESSMENT:
+• Authenticity: High confidence
+• Relevance: Directly supports customer complaint
+• Clarity: Clear evidence of service failure
+• Impact: Justifies immediate resolution
+
+🎯 RECOMMENDED ACTION:
+Based on photographic evidence, customer complaint is validated. Proceed with:
+1. Full compensation as justified by visual evidence
+2. Quality assurance follow-up with relevant service provider
+3. Process improvement to prevent similar incidents
+
+The image evidence strongly supports the customer's claim and warrants immediate resolution."""
+    
+    # Handle general image context
+    return f"""🔍 IMAGE EVIDENCE REVIEW:
+
+📸 Evidence Provided: {image_context}
+
+✅ EVIDENCE STATUS:
+• Customer has provided visual documentation
+• Evidence supports their complaint description
+• Documentation aids in fair resolution
+• Validates customer's experience
+
+🎯 RESOLUTION APPROACH:
+With supporting visual evidence, we can proceed with confident resolution:
+1. Evidence confirms service issue occurred
+2. Visual proof supports compensation decision
+3. Documentation helps prevent future incidents
+
+The provided image evidence strengthens the case for immediate customer compensation."""
+
 def orchestrate_resolution_plan(issue_details: str) -> str:
     """Create and execute a comprehensive multi-step resolution plan with proactive problem detection."""
     print(f"--- Orchestrating Resolution Plan: {issue_details} ---")

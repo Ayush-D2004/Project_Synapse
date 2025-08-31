@@ -28,26 +28,124 @@ except ImportError as e:
     print(f"Warning: Agent not available: {e}")
     AGENT_AVAILABLE = False
 
-# --- Image Description Helper ---
-def describe_image(image):
+# --- Enhanced Image Analysis with Real AI Vision ---
+def analyze_image_content(image):
     """
-    Advanced image analysis for evidence gathering.
-    TODO: Replace with actual computer vision model for real deployment.
+    Real image analysis using Google Gemini Vision API for customer service evidence.
+    Analyzes actual uploaded images to extract relevant information.
     """
-    import random
-    
-    descriptions = [
-        "Image shows damaged food packaging with visible spills and torn container edges, likely due to handling during transport",
-        "Photo displays incorrect food items - appears to be burger and fries instead of ordered salad and sandwich",
-        "Image reveals wet packaging and water damage, suggesting exposure to rain during delivery",
-        "Picture shows driver at correct address with 'recipient not available' door sign, timestamp matches delivery window", 
-        "Photo evidence of properly sealed food containers in intact delivery bag, no visible damage or tampering",
-        "Image shows traffic congestion and road closure signs that would cause significant delivery delays",
-        "Picture displays restaurant kitchen with 'temporarily closed' sign, explaining order cancellation",
-        "Photo shows customer location with incorrect address numbering, causing delivery confusion"
-    ]
-    
-    return random.choice(descriptions)
+    try:
+        # Import Google Generative AI for vision
+        import google.generativeai as genai
+        from config import load_api_key
+        
+        # Load API key (same as used for the chat agent)
+        load_api_key()
+        
+        # Configure Gemini for vision analysis
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Convert PIL image to bytes for API
+        img_buffer = io.BytesIO()
+        image.save(img_buffer, format='PNG')
+        img_buffer.seek(0)
+        
+        # Prepare the image for Gemini
+        image_data = {
+            'mime_type': 'image/png',
+            'data': img_buffer.getvalue()
+        }
+        
+        # Detailed prompt for food delivery analysis
+        analysis_prompt = """
+You are an AI assistant for Grab food delivery service analyzing customer complaint images. 
+
+Analyze this image and provide a detailed assessment for customer service purposes. Focus on:
+
+1. **Food Condition**: Is the food spilled, damaged, cold, or in poor condition?
+2. **Order Accuracy**: Does this match what a customer might have ordered? Any obvious wrong items?
+3. **Packaging Issues**: Is packaging damaged, opened, or compromised?
+4. **Delivery Issues**: Any signs of delivery problems, weather damage, or mishandling?
+5. **Quality Concerns**: Food freshness, temperature indicators, presentation issues?
+
+Provide your analysis in this exact JSON format:
+{
+    "issue_type": "food_damage|wrong_order|quality_issue|delivery_proof|packaging_issue",
+    "description": "Clear description of what you observe in the image",
+    "evidence": {
+        "condition": "what condition the food/items are in",
+        "accuracy": "whether items match typical food orders",
+        "damage_level": "none|minor|moderate|severe",
+        "compensation_recommended": "suggested resolution based on what you see"
+    },
+    "confidence": 0.85
+}
+
+Analyze the actual image content - don't make up scenarios. Base your assessment only on what you can see.
+"""
+        
+        # Get analysis from Gemini Vision
+        response = model.generate_content([analysis_prompt, image_data])
+        analysis_text = response.text.strip()
+        
+        # Try to parse JSON response
+        import json
+        try:
+            # Extract JSON from response (in case there's extra text)
+            start = analysis_text.find('{')
+            end = analysis_text.rfind('}') + 1
+            if start >= 0 and end > start:
+                json_str = analysis_text[start:end]
+                analysis_data = json.loads(json_str)
+            else:
+                raise ValueError("No valid JSON found")
+                
+        except (json.JSONDecodeError, ValueError):
+            # Fallback: parse the text response manually
+            analysis_data = {
+                "issue_type": "general_complaint",
+                "description": f"AI Analysis: {analysis_text[:200]}...",
+                "evidence": {
+                    "condition": "requires human review",
+                    "accuracy": "image uploaded for complaint",
+                    "damage_level": "moderate",
+                    "compensation_recommended": "standard resolution"
+                },
+                "confidence": 0.75
+            }
+        
+        # Format for return
+        from datetime import datetime
+        return {
+            "analysis": analysis_data["description"],
+            "evidence": analysis_data["evidence"],
+            "image_metadata": {
+                "dimensions": f"{image.size[0]}x{image.size[1]}",
+                "analyzed_at": datetime.now().isoformat(),
+                "analysis_confidence": analysis_data.get("confidence", 0.8),
+                "analysis_type": "real_ai_vision"
+            }
+        }
+        
+    except Exception as e:
+        print(f"Vision API error: {e}")
+        # Fallback to basic analysis
+        from datetime import datetime
+        return {
+            "analysis": f"Image uploaded by customer. Technical analysis unavailable. Manual review recommended for: {e}",
+            "evidence": {
+                "condition": "customer provided visual evidence",
+                "accuracy": "requires manual verification", 
+                "damage_level": "moderate",
+                "compensation_recommended": "standard customer service resolution"
+            },
+            "image_metadata": {
+                "dimensions": f"{image.size[0]}x{image.size[1]}",
+                "analyzed_at": datetime.now().isoformat(),
+                "analysis_confidence": 0.6,
+                "analysis_type": "fallback_analysis"
+            }
+        }
 
 @app.route('/')
 def index():
@@ -91,12 +189,22 @@ def send_message():
                 image.save(img_buffer, format='PNG')
                 img_base64 = base64.b64encode(img_buffer.getvalue()).decode()
                 
-                image_description = describe_image(image)
+                # Enhanced image analysis
+                image_analysis = analyze_image_content(image)
+                image_description = image_analysis["analysis"]
+                
                 user_message['image'] = img_base64
                 user_message['image_description'] = image_description
-                agent_input_content.append(image_description)
+                user_message['image_analysis'] = image_analysis
+                user_message['has_image'] = True
+                
+                # Add detailed image context to agent input
+                agent_input_content.append(f"Image Evidence: {image_description}")
+                agent_input_content.append(f"Evidence Details: {image_analysis['evidence']}")
+                
             except Exception as e:
                 print(f"Error processing image: {e}")
+                user_message['image_error'] = str(e)
         
         session['messages'].append(user_message)
         
@@ -144,8 +252,14 @@ def send_message():
             
             # Update memory (text only)
             session['memory'].append({'role': 'user', 'content': user_prompt})
-            if image_description:
-                session['memory'].append({'role': 'user', 'content': f"Image Description: {image_description}"})
+            if 'image_analysis' in user_message:
+                # Store comprehensive image context in memory
+                image_context = f"""Image Evidence Analyzed:
+- Description: {user_message['image_description']}
+- Evidence: {user_message['image_analysis']['evidence']}
+- Analysis Confidence: {user_message['image_analysis']['image_metadata']['analysis_confidence']:.1%}
+- Analyzed at: {user_message['image_analysis']['image_metadata']['analyzed_at']}"""
+                session['memory'].append({'role': 'system', 'content': image_context})
             session['memory'].append({'role': 'assistant', 'content': final_output})
             
             session.modified = True

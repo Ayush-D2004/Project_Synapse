@@ -274,7 +274,8 @@
         }
 
         .message-content {
-            max-width: 70%;
+            min-width: 80%;
+            max-width: 80%;
             background: var(--grab-white);
             border-radius: 16px;
             padding: 16px 20px;
@@ -304,6 +305,95 @@
             border-radius: 8px;
             margin: 12px 0;
             border: 2px solid var(--grab-light-gray);
+        }
+
+        .image-container {
+            margin: 12px 0;
+            border-radius: 10px;
+            background: rgb(255, 255, 255);
+            padding: 12px;
+            border-left: 4px solid var(--grab-green);
+        }
+
+        .image-analysis {
+            margin-top: 10px;
+        }
+
+        .analysis-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--grab-dark-green);
+            margin-bottom: 8px;
+        }
+
+        .confidence-badge {
+            background: linear-gradient(135deg, var(--grab-green), var(--grab-dark-green));
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .analysis-toggle {
+            border: 1px solid var(--grab-green);
+            color: var(--grab-green);
+            background: transparent;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .analysis-toggle:hover {
+            background: var(--grab-green);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .analysis-description {
+            font-size: 13px;
+            color: var(--grab-dark-gray);
+            margin-bottom: 10px;
+            line-height: 1.4;
+            display: none;
+            margin-top: 8px;
+            padding: 12px;
+            background: rgba(0, 177, 79, 0.05);
+            border-radius: 6px;
+            border-left: 3px solid var(--grab-green);
+        }
+
+        .analysis-description.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .evidence-details {
+            background: rgb(215 242 227);
+            color: var(--grab-dark-gray);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .evidence-details ul {
+            margin: 8px 0 0 0;
+            padding-left: 16px;
+        }
+
+        .evidence-details li {
+            margin: 4px 0;
+            line-height: 1.3;
         }
 
         .image-description {
@@ -730,7 +820,7 @@
             document.getElementById('imageInput').value = '';
 
             // Add loading message
-            addLoadingMessage();
+            addLoadingMessage(!!imageFile);
 
             try {
                 const response = await fetch('/send_message', {
@@ -770,9 +860,54 @@
             let reasoningHtml = '';
 
             if (message.image) {
+                let analysisHtml = '';
+                if (message.image_analysis) {
+                    const evidence = message.image_analysis.evidence;
+                    const metadata = message.image_analysis.image_metadata;
+                    const confidence = (metadata.analysis_confidence * 100).toFixed(1);
+                    const analysisId = `analysis-${Date.now()}`;
+                    
+                    analysisHtml = `
+                        <div class="image-analysis">
+                            <div class="analysis-header">
+                                <i class="fas fa-camera"></i> Image Analysis Complete
+                                <span class="confidence-badge">${confidence}% confidence</span>
+                            </div>
+                            <button class="analysis-toggle" onclick="toggleAnalysis('${analysisId}')">
+                                <i class="fas fa-eye"></i> Show Analysis Details
+                            </button>
+                            <div class="analysis-description" id="${analysisId}">
+                                <div style="margin-bottom: 12px;">${message.image_description}</div>
+                                <div class="evidence-details">
+                                    <strong>Evidence Extracted:</strong>
+                                    <ul>
+                                        ${Object.entries(evidence).map(([key, value]) => 
+                                            `<li><strong>${key.replace(/_/g, ' ')}:</strong> ${value}</li>`
+                                        ).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (message.image_description) {
+                    const analysisId = `analysis-${Date.now()}`;
+                    analysisHtml = `
+                        <div class="image-analysis">
+                            <button class="analysis-toggle" onclick="toggleAnalysis('${analysisId}')">
+                                <i class="fas fa-eye"></i> Show Image Description
+                            </button>
+                            <div class="analysis-description" id="${analysisId}">
+                                ${message.image_description}
+                            </div>
+                        </div>
+                    `;
+                }
+                
                 imageHtml = `
-                    <img src="data:image/png;base64,${message.image}" alt="Uploaded image" class="message-image">
-                    ${message.image_description ? `<div class="image-description">${message.image_description}</div>` : ''}
+                    <div class="image-container">
+                        <img src="data:image/png;base64,${message.image}" alt="Uploaded image" class="message-image">
+                        ${analysisHtml}
+                    </div>
                 `;
             }
 
@@ -864,16 +999,47 @@
             }
         }
 
-        function addLoadingMessage() {
+        function toggleAnalysis(id) {
+            const content = document.getElementById(id);
+            const button = content.previousElementSibling;
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                if (button.innerHTML.includes('Analysis Details')) {
+                    button.innerHTML = '<i class="fas fa-eye"></i> Show Analysis Details';
+                } else {
+                    button.innerHTML = '<i class="fas fa-eye"></i> Show Image Description';
+                }
+            } else {
+                content.classList.add('show');
+                if (button.innerHTML.includes('Analysis Details')) {
+                    button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Analysis Details';
+                } else {
+                    button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Image Description';
+                }
+            }
+        }
+
+        function addLoadingMessage(hasImage = false) {
             const chatContainer = document.getElementById('chatContainer');
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'message assistant loading-message';
+            
+            const loadingText = hasImage ? 
+                'Synapse is analyzing your image and processing your request...' : 
+                'Synapse is analyzing your request...';
+                
+            const imageIndicator = hasImage ? 
+                '<div style="margin-top: 8px; font-size: 12px; color: var(--grab-green);"><i class="fas fa-image"></i> Image processing in progress</div>' : 
+                '';
+            
             loadingDiv.innerHTML = `
                 <div class="message-avatar">AI</div>
                 <div class="message-content">
                     <div class="loading">
                         <div class="spinner"></div>
-                        Synapse is analyzing your request...
+                        ${loadingText}
+                        ${imageIndicator}
                     </div>
                 </div>
             `;
@@ -945,6 +1111,22 @@
                 console.error('Error loading messages:', error);
             }
         }
+
+        // Add visual feedback for image selection
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const attachmentBtn = document.querySelector('.attachment-btn');
+            if (e.target.files && e.target.files[0]) {
+                // Show image selected indicator
+                attachmentBtn.innerHTML = '<i class="fas fa-check" style="color: var(--grab-green);"></i>';
+                attachmentBtn.title = `Image selected: ${e.target.files[0].name}`;
+                attachmentBtn.style.background = 'rgba(0, 177, 79, 0.1)';
+            } else {
+                // Reset to default state
+                attachmentBtn.innerHTML = '<i class="fas fa-paperclip"></i>';
+                attachmentBtn.title = 'Attach image';
+                attachmentBtn.style.background = '';
+            }
+        });
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
