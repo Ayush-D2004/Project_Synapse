@@ -64,7 +64,7 @@ class SandboxDatabase:
                     "unavailable_items": "contact_customer"
                 },
                 "quality_issues": [],
-                "last_inspection": "2024-08-01"
+                "last_inspection": "2024-08-01"     
             }
         }
         
