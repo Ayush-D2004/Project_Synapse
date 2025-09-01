@@ -19,12 +19,10 @@ def get_customer_profile(customer_id: str) -> str:
     
     profile_summary = f"""
 Customer Profile Analysis:
-• Name: {customer['name']} (ID: {customer_id})
+• Name: {customer['name']}
 • Account Status: {customer['account_status'].upper()}
 • Customer Rating: {customer['rating']}/5.0
 • Total Orders: {customer['total_orders']}
-• Complaint History: {len(customer['complaint_history'])} complaints
-• Wallet Balance: ₹{customer['wallet_balance']}
 • Member Since: {customer['joined_date']}
 • Risk Assessment: {'HIGH' if len(customer['complaint_history']) > 2 else 'MEDIUM' if len(customer['complaint_history']) > 0 else 'LOW'}
 • Trustworthiness: {'EXCELLENT' if customer['rating'] > 4.5 else 'GOOD' if customer['rating'] > 4.0 else 'AVERAGE'}

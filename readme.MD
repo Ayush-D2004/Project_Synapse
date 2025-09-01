@@ -1,4 +1,5 @@
 ## What's new 
+- Multi language support
 - IMAGE processing
 - Sandbox env + database + tools
 - advacned tools
