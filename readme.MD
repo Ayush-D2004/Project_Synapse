@@ -203,20 +203,13 @@ The system automatically categorizes complaints:
 
 ### Running the Application
 
-#### Option 1: Flask Web Interface (Recommended)
+#### Option 1: Flask Web Interface
 ```bash
 python app.py
 ```
 - Open your browser to `http://localhost:5000`
 - Experience the full customer service interface
 - Test evidence collection and escalation features
-
-#### Option 2: Streamlit Interface  
-```bash
-streamlit run flask_app.py
-```
-- Alternative interface at `http://localhost:8501`
-- Simplified testing environment
 
 ### Testing the System
 
@@ -250,15 +243,6 @@ Prototype/
 │   └── sandbox_tools.py       # Sandbox-specific tools
 └── __pycache__/               # Python cache files
 ```
-
-## 🤝 Contributing
-
-We welcome contributions! Please focus on:
-- **Business Logic Improvements**: Enhanced evidence collection and validation
-- **UI/UX Enhancements**: Better customer experience design  
-- **Tool Expansion**: Additional customer service capabilities
-- **Analytics Features**: Improved business intelligence and reporting
-
 ## 📜 License
 
 This project is created for educational and demonstration purposes. Please ensure compliance with your organization's policies when implementing in production environments.
@@ -270,15 +254,6 @@ For questions or issues:
 2. Verify your Gemini API key is correctly configured
 3. Ensure all dependencies are properly installed
 4. Review the sandbox database for realistic test data
-
-## 🔮 Future Enhancements
-
-- **Multi-language Support**: Automatic language detection and response
-- **Voice Integration**: Audio complaint processing capabilities  
-- **Advanced Analytics**: Machine learning-based pattern recognition
-- **Mobile App Integration**: Native mobile customer service interface
-- **Real-time Notifications**: Instant updates for customers and support staff
-
 ---
 
 **Built with ❤️ for smarter, more sustainable customer service automation**
