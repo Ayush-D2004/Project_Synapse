@@ -4,10 +4,19 @@ import base64
 from PIL import Image
 import io
 import uuid
+import tempfile
+import assemblyai as aai
 
 # Initialize Flask app with explicit static folder configuration
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = 'your-secret-key-here'  # Change this in production
+
+# Configure AssemblyAI with API key from environment
+try:
+    from config import load_assemblyai_api_key
+    aai.settings.api_key = load_assemblyai_api_key()
+except Exception as e:
+    print(f"Warning: AssemblyAI API key not loaded: {e}")
 
 # Add route to serve static files explicitly (fallback)
 @app.route('/static/<filename>')
@@ -288,6 +297,62 @@ def clear_conversation():
 @app.route('/get_messages')
 def get_messages():
     return jsonify(session.get('messages', []))
+
+@app.route('/transcribe_audio', methods=['POST'])
+def transcribe_audio():
+    """
+    Transcribe uploaded audio using AssemblyAI speech-to-text API
+    """
+    try:
+        if 'audio' not in request.files:
+            return jsonify({'success': False, 'error': 'No audio file provided'}), 400
+            
+        audio_file = request.files['audio']
+        if audio_file.filename == '':
+            return jsonify({'success': False, 'error': 'No audio file selected'}), 400
+            
+        # Save uploaded audio to temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+            audio_file.save(temp_file.name)
+            temp_file_path = temp_file.name
+            
+        try:
+            # Configure AssemblyAI transcription
+            config = aai.TranscriptionConfig(
+                speech_model=aai.SpeechModel.universal,
+                language_detection=True,  # Auto-detect language
+                punctuate=True,  # Add punctuation
+                format_text=True  # Format text properly
+            )
+            
+            # Transcribe the audio
+            transcriber = aai.Transcriber(config=config)
+            transcript = transcriber.transcribe(temp_file_path)
+            
+            if transcript.status == "error":
+                return jsonify({
+                    'success': False, 
+                    'error': f'Transcription failed: {transcript.error}'
+                }), 500
+                
+            # Return successful transcription
+            return jsonify({
+                'success': True,
+                'text': transcript.text,
+                'confidence': transcript.confidence if hasattr(transcript, 'confidence') else 0.9
+            })
+            
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+                
+    except Exception as e:
+        print(f"Transcription error: {e}")
+        return jsonify({
+            'success': False, 
+            'error': f'Transcription processing error: {str(e)}'
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
