@@ -16,6 +16,7 @@ class SandboxDatabase:
         self.transactions = {}
         self.complaints = {}
         self.delivery_logs = {}
+        self.customer_care_officers = {}
         self._initialize_data()
     
     def _initialize_data(self):
@@ -91,6 +92,54 @@ class SandboxDatabase:
         self.orders = {}
         self.delivery_logs = {}
         self.transactions = {}
+        
+        # Customer care officers
+        self.customer_care_officers = {
+            "CCO001": {
+                "id": "CCO001",
+                "name": "Sarah Chen",
+                "specialization": "Order Issues & Refunds",
+                "rating": 4.8,
+                "cases_handled": 1250,
+                "current_status": "available",
+                "languages": ["English", "Hindi"],
+                "shift": "Day",
+                "experience_years": 3
+            },
+            "CCO002": {
+                "id": "CCO002", 
+                "name": "Rajesh Kumar",
+                "specialization": "Delivery & Driver Issues",
+                "rating": 4.7,
+                "cases_handled": 980,
+                "current_status": "available",
+                "languages": ["English", "Hindi", "Punjabi"],
+                "shift": "Day",
+                "experience_years": 2
+            },
+            "CCO003": {
+                "id": "CCO003",
+                "name": "Maria Santos", 
+                "specialization": "Payment & Wallet Issues",
+                "rating": 4.9,
+                "cases_handled": 1100,
+                "current_status": "busy",
+                "languages": ["English"],
+                "shift": "Night",
+                "experience_years": 4
+            },
+            "CCO004": {
+                "id": "CCO004",
+                "name": "David Johnson",
+                "specialization": "General Support",
+                "rating": 4.6,
+                "cases_handled": 850,
+                "current_status": "available", 
+                "languages": ["English"],
+                "shift": "Day",
+                "experience_years": 1
+            }
+        }
     
     def get_customer_details(self, customer_id: str) -> Optional[Dict]:
         """Get customer information"""
@@ -162,6 +211,42 @@ class SandboxDatabase:
             self.customers[customer_id]["complaint_history"].append(complaint_id)
         
         return complaint_id
+    
+    def get_available_customer_care_officer(self, specialization: str = None) -> Optional[Dict]:
+        """Get an available customer care officer, optionally by specialization"""
+        available_officers = [
+            officer for officer in self.customer_care_officers.values()
+            if officer["current_status"] == "available"
+        ]
+        
+        if not available_officers:
+            return None
+            
+        if specialization:
+            # Try to find officer with matching specialization
+            specialized_officers = [
+                officer for officer in available_officers
+                if specialization.lower() in officer["specialization"].lower()
+            ]
+            if specialized_officers:
+                return specialized_officers[0]
+        
+        # Return any available officer
+        return available_officers[0]
+    
+    def assign_customer_care_officer(self, officer_id: str) -> bool:
+        """Mark a customer care officer as busy"""
+        if officer_id in self.customer_care_officers:
+            self.customer_care_officers[officer_id]["current_status"] = "busy"
+            return True
+        return False
+    
+    def release_customer_care_officer(self, officer_id: str) -> bool:
+        """Mark a customer care officer as available again"""
+        if officer_id in self.customer_care_officers:
+            self.customer_care_officers[officer_id]["current_status"] = "available"
+            return True
+        return False
     
     def log_merchant_feedback(self, merchant_id: str, issue: str, severity: str) -> bool:
         """Log feedback against a merchant"""
