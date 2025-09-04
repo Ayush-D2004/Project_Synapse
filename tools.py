@@ -138,7 +138,7 @@ def generate_personalized_response(issue_type: str, weather_factor: bool = False
 
 def analyze_customer_situation(customer_message: str) -> str:
     """
-    Business-first analysis that directs to proper negotiation workflow instead of immediate compensation
+    Business-first analysis that requests evidence and directs to proper workflow
     """
     print(f"--- Business Analysis: {customer_message} ---")
     
@@ -146,8 +146,8 @@ def analyze_customer_situation(customer_message: str) -> str:
     message_lower = customer_message.lower()
     
     # Determine if this is a tracking request or actual problem
-    tracking_keywords = ["where", "late", "status", "driver", "eta", "time", "location"]
-    problem_keywords = ["spill", "wrong", "damage", "cold", "missing", "terrible", "awful", "bad"]
+    tracking_keywords = ["where", "status", "driver", "eta", "time", "location"]
+    problem_keywords = ["spill", "wrong", "damage", "cold", "missing", "terrible", "awful", "bad", "broken", "packaging"]
     
     is_tracking_request = any(word in message_lower for word in tracking_keywords) and not any(word in message_lower for word in problem_keywords)
     is_actual_problem = any(word in message_lower for word in problem_keywords)
@@ -156,43 +156,66 @@ def analyze_customer_situation(customer_message: str) -> str:
         return f"""🎯 TRACKING REQUEST DETECTED:
         
 ✅ Customer wants: ORDER LOCATION INFORMATION
-❌ Customer does NOT want: Immediate compensation
+❌ Customer does NOT want: Compensation
 
 🚀 BUSINESS ACTION REQUIRED:
 • Use track_delivery_status() IMMEDIATELY
 • Provide actual delivery location and timing
-• Only offer small gesture (₹20-50 voucher) if delay >30 minutes
-• AVOID immediate refund offers
+• Only offer small gesture voucher if delay >45 minutes
+• AVOID any compensation discussions
 
 💡 Remember: Customer asking "where is my order?" wants INFORMATION, not money!"""
     
     elif is_actual_problem:
+        # Determine if visual evidence would help
+        evidence_needed_cases = ["spill", "damage", "wrong", "packaging", "quality", "broken", "mess", "bad"]
+        needs_evidence = any(word in message_lower for word in evidence_needed_cases)
+        
         issue_type = "general_problem"
-        if any(word in message_lower for word in ["spill", "damage", "leak"]):
+        if any(word in message_lower for word in ["spill", "damage", "leak", "mess"]):
             issue_type = "spilled_food"
         elif any(word in message_lower for word in ["wrong", "different", "mistake"]):
             issue_type = "wrong_order"
+        elif any(word in message_lower for word in ["packaging", "broken", "damaged"]):
+            issue_type = "packaging_issue"
         elif any(word in message_lower for word in ["cold", "lukewarm"]):
             issue_type = "cold_food"
         elif any(word in message_lower for word in ["missing", "forgot"]):
             issue_type = "missing_items"
+        elif any(word in message_lower for word in ["quality", "bad", "terrible"]):
+            issue_type = "quality_issue"
+        
+        evidence_instruction = ""
+        if needs_evidence:
+            evidence_instruction = f"""
+📸 **EVIDENCE COLLECTION REQUIRED:**
+• Request customer to upload photo evidence
+• Visual proof helps with accurate assessment
+• Say: "Could you please share a photo of the issue? This will help me understand the situation better and ensure appropriate resolution."
+• WAIT for evidence before proceeding to compensation
+"""
         
         return f"""🎯 ACTUAL PROBLEM DETECTED:
         
 ✅ Issue Type: {issue_type.replace('_', ' ').title()}
-🚨 Business Priority: SOLVE FIRST, COMPENSATE SECOND
+🚨 Business Priority: COLLECT EVIDENCE → LOG FEEDBACK → MINIMAL COMPENSATION
+
+{evidence_instruction}
 
 🚀 MANDATORY BUSINESS WORKFLOW:
 1. Acknowledge the problem with empathy
-2. Offer SOLUTION first (redelivery, replacement, etc.)
-3. IF customer insists on money → use gather_compensation_details()
-4. THEN use negotiate_fair_compensation() 
-5. NEVER use issue_instant_refund without negotiation
+2. Request photo evidence if applicable
+3. Log feedback as "valuable for improvement"  
+4. Offer SOLUTION first (redelivery, replacement)
+5. ONLY if customer extremely dissatisfied → offer 70% voucher
+6. NEVER mention "compensation for fault" - say "goodwill gesture"
 
-💼 FORBIDDEN: Immediate compensation without trying solutions first!
-💼 FORBIDDEN: Using provide_generic_solution for compensation!
+💼 FORBIDDEN: 
+• Immediate compensation without evidence
+• Using words like "refund" or "compensation for our mistake"
+• Offering real money instead of vouchers
 
-💡 Remember: Every rupee matters to company sustainability!"""
+💡 Remember: Frame as feedback logging, not fault admission!"""
     
     else:
         return f"""🎯 GENERAL INQUIRY DETECTED:
@@ -202,7 +225,7 @@ def analyze_customer_situation(customer_message: str) -> str:
 
 💡 Ask customer to clarify:
 • Are you tracking an order?
-• Is there a problem with your delivery?
+• Is there an issue with your delivery?
 • What specific assistance do you need?"""
     
     # Classify severity dynamically
@@ -1597,3 +1620,223 @@ def calculate_dynamic_refund_amount(order_value: int, issue_type: str, customer_
 
 🚦 APPROVAL STATUS: {"Pre-approved" if refund_amount <= order_value * 0.7 else "Requires supervisor approval"}
 💡 CUSTOMER SATISFACTION TARGET: {random.choice([85, 90, 95])}% resolution confidence"""
+
+
+def request_visual_evidence(issue_description: str) -> str:
+    """
+    Request customer to provide photo evidence for better assessment
+    """
+    print(f"--- Requesting Visual Evidence: {issue_description} ---")
+    
+    # Determine appropriate evidence request based on issue
+    issue_lower = issue_description.lower()
+    
+    if any(word in issue_lower for word in ["spill", "damage", "mess", "leak"]):
+        evidence_type = "spilled or damaged food"
+        specific_request = "Could you please share a photo showing the spilled/damaged food? This will help me understand exactly what happened and ensure we address this properly."
+        
+    elif any(word in issue_lower for word in ["wrong", "different", "mistake"]):
+        evidence_type = "wrong order items"
+        specific_request = "Could you please take a photo of what you received versus what you ordered? This visual evidence will help me verify the mix-up and arrange the correct resolution."
+        
+    elif any(word in issue_lower for word in ["packaging", "broken", "container"]):
+        evidence_type = "packaging condition"
+        specific_request = "Could you please share a photo of the packaging/container issue? This helps us identify if this is a restaurant packaging problem or delivery handling issue."
+        
+    elif any(word in issue_lower for word in ["quality", "bad", "terrible", "awful"]):
+        evidence_type = "food quality issue"
+        specific_request = "Could you please take a photo showing the quality issue with the food? Visual evidence helps us provide accurate feedback to the restaurant."
+        
+    else:
+        evidence_type = "order issue"
+        specific_request = "Could you please share a photo of the issue you're experiencing? Visual evidence helps me understand the situation better."
+    
+    return f"""📸 **VISUAL EVIDENCE REQUEST**
+
+Thank you for bringing this to our attention. To ensure I provide you with the most appropriate resolution, I'd like to gather some visual evidence.
+
+🎯 **Evidence Needed:** Photo of {evidence_type}
+
+📱 **How to submit:**
+{specific_request}
+
+You can upload the image using the attachment button in this chat.
+
+💡 **Why we need this:**
+• Visual evidence helps us understand exactly what went wrong
+• Enables accurate assessment for fair resolution  
+• Helps us provide feedback to restaurants/delivery partners for improvement
+• Ensures we address your specific situation appropriately
+
+⏰ **Next Steps:** Once I receive your photo, I'll immediately review the evidence and provide you with appropriate options for resolution.
+
+Your feedback is valuable in helping us maintain service quality!"""
+
+
+def log_customer_feedback(feedback_details: str, evidence_provided: str = "none") -> str:
+    """
+    Log customer feedback without admitting fault - position as valuable improvement data
+    """
+    print(f"--- Logging Customer Feedback: {feedback_details} ---")
+    
+    # Generate a feedback reference number
+    feedback_id = f"FB{random.randint(10000, 99999)}"
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Determine feedback category
+    details_lower = feedback_details.lower()
+    category = "General"
+    
+    if any(word in details_lower for word in ["spill", "damage", "mess"]):
+        category = "Delivery Handling"
+    elif any(word in details_lower for word in ["wrong", "different", "mistake"]):
+        category = "Order Accuracy"
+    elif any(word in details_lower for word in ["packaging", "container"]):
+        category = "Packaging Quality"
+    elif any(word in details_lower for word in ["quality", "food", "taste"]):
+        category = "Food Quality"
+    elif any(word in details_lower for word in ["late", "delay", "time"]):
+        category = "Delivery Timeliness"
+    
+    return f"""📋 **FEEDBACK LOGGED SUCCESSFULLY**
+
+✅ **Feedback Reference:** {feedback_id}
+📅 **Logged At:** {current_time}
+🏷️ **Category:** {category}
+📸 **Evidence:** {"Photo evidence attached" if evidence_provided != "none" else "Description provided"}
+
+🎯 **Your Feedback Summary:**
+"{feedback_details[:100]}..."
+
+💡 **Impact of Your Feedback:**
+• This information helps us identify improvement opportunities
+• Quality control team will review for service enhancement
+• Restaurant partners receive quality feedback for improvement
+• Delivery processes will be evaluated based on your input
+
+📊 **What Happens Next:**
+• Your feedback is valuable data for our operations team
+• We use this information to enhance service quality
+• Relevant teams will be notified for process improvements
+• Your experience contributes to better service for all customers
+
+🙏 **Thank You for Your Input:**
+Customer feedback like yours is essential for maintaining high service standards. Every report helps us serve you and other customers better.
+
+*Your feedback has been recorded and will be used for service improvement purposes.*"""
+
+
+def offer_goodwill_voucher(issue_type: str, customer_satisfaction_level: str = "dissatisfied") -> str:
+    """
+    Offer conservative goodwill vouchers (70-90%) only for extremely dissatisfied customers
+    """
+    print(f"--- Offering Goodwill Voucher: {issue_type}, satisfaction: {customer_satisfaction_level} ---")
+    
+    # Determine order value (simulated)
+    order_value = random.choice([200, 300, 400, 500, 600, 700, 800])
+    
+    # Conservative voucher amounts based on satisfaction level
+    if customer_satisfaction_level.lower() in ["extremely dissatisfied", "very upset", "angry"]:
+        voucher_percentage = 70
+        escalation_percentage = 90
+    elif customer_satisfaction_level.lower() in ["dissatisfied", "unhappy"]:
+        voucher_percentage = 50
+        escalation_percentage = 70
+    else:
+        voucher_percentage = 30
+        escalation_percentage = 50
+    
+    initial_voucher = int(order_value * voucher_percentage / 100)
+    max_voucher = int(order_value * escalation_percentage / 100)
+    
+    # Generate voucher code
+    voucher_code = f"GOODWILL{random.randint(1000, 9999)}"
+    expiry_date = (datetime.now() + timedelta(days=30)).strftime("%d %B %Y")
+    
+    return f"""🎁 **GOODWILL GESTURE OFFERED**
+
+I truly appreciate your patience and your valuable feedback. As a token of our commitment to service improvement, I'd like to offer you a goodwill voucher.
+
+💳 **Voucher Details:**
+• **Amount:** ₹{initial_voucher} Grab Credit
+• **Code:** {voucher_code}
+• **Valid Until:** {expiry_date}
+• **Usage:** Any restaurant or delivery on Grab
+
+✨ **This Voucher Represents:**
+• Our appreciation for your feedback
+• Commitment to better service quality
+• Goodwill gesture for the inconvenience
+• Investment in your continued trust
+
+🎯 **Not a Refund - It's a Goodwill Gesture:**
+This isn't compensation for fault - it's our way of saying thank you for helping us improve and showing we value your continued partnership with Grab.
+
+💡 **How to Use:**
+• Voucher will be added to your account within 5 minutes
+• Use it on your next order automatically
+• No minimum order requirement
+• Stackable with other promotions
+
+*If this gesture doesn't feel adequate for your experience, I can escalate this to our customer care team for additional review. Would you like me to connect you with a customer care officer?*
+
+**Maximum possible goodwill voucher: ₹{max_voucher} if situation warrants**"""
+
+
+def escalate_to_customer_care_officer(escalation_reason: str, customer_issue: str) -> str:
+    """
+    Escalate to human customer care officer with proper handoff
+    """
+    print(f"--- Escalating to Customer Care Officer: {escalation_reason} ---")
+    
+    # Generate escalation details
+    escalation_id = f"ESC{random.randint(10000, 99999)}"
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Simulated customer care officer (will add to sandbox later)
+    care_officers = [
+        {"name": "Sarah Chen", "id": "CO001", "specialization": "Delivery Issues", "rating": 4.8},
+        {"name": "Rajesh Kumar", "id": "CO002", "specialization": "Food Quality", "rating": 4.9},
+        {"name": "Maria Santos", "id": "CO003", "specialization": "Order Disputes", "rating": 4.7},
+        {"name": "David Johnson", "id": "CO004", "specialization": "Customer Relations", "rating": 4.8}
+    ]
+    
+    assigned_officer = random.choice(care_officers)
+    estimated_wait = random.choice([3, 5, 7, 10])
+    
+    return f"""👤 **ESCALATION TO CUSTOMER CARE OFFICER**
+
+I understand your concerns and want to ensure you receive the attention this matter deserves. I'm connecting you with one of our customer care specialists.
+
+🎯 **Escalation Details:**
+• **Reference ID:** {escalation_id}
+• **Escalated At:** {current_time}
+• **Reason:** {escalation_reason}
+
+👨‍💼 **Your Assigned Officer:**
+• **Name:** {assigned_officer['name']}
+• **ID:** {assigned_officer['id']}
+• **Specialization:** {assigned_officer['specialization']}
+• **Customer Rating:** {assigned_officer['rating']}⭐
+
+⏰ **Connection Details:**
+• **Estimated Wait Time:** {estimated_wait} minutes
+• **Contact Method:** Live chat transfer
+• **Priority Level:** High (Escalated from AI)
+
+📋 **Information Being Transferred:**
+• Complete conversation history
+• Issue details and evidence provided
+• Previous resolution attempts
+• Customer satisfaction concerns
+
+💡 **What to Expect:**
+• {assigned_officer['name']} has authority for enhanced resolutions
+• Can approve additional goodwill measures if warranted
+• Will provide personalized attention to your specific situation
+• Has access to supervisor-level tools and options
+
+🚀 **Preparing Transfer...**
+*Please hold while I connect you with {assigned_officer['name']}. Your conversation history and case details are being transferred now.*
+
+**Note:** {assigned_officer['name']} will be with you shortly and has full context of your situation."""
