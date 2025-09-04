@@ -40,6 +40,13 @@ The system uses Google's Gemini AI with LangChain's ReAct framework to create an
 - **Driver Performance**: Monitors delivery-related complaints
 - **Business Insights**: Generates actionable data for operational improvements
 
+### 🎤 Speech-to-Text Integration
+- **Voice Input**: Customers can speak their complaints instead of typing
+- **Real-time Transcription**: Powered by AssemblyAI's advanced speech recognition
+- **Language Detection**: Automatic language detection and transcription
+- **Text Editing**: Users can review and edit transcribed text before submission
+- **Accessibility**: Makes the system more accessible for users who prefer voice input
+
 ## 🔧 Technical Architecture
 
 ### Backend Infrastructure
@@ -164,6 +171,7 @@ The system automatically categorizes complaints:
 ### Prerequisites
 - **Python 3.8+**: Ensure you have Python installed
 - **Google Gemini API Key**: Required for AI functionality
+- **AssemblyAI API Key**: Required for speech-to-text functionality
 - **Git**: For cloning the repository
 
 ### Installation Steps
@@ -194,12 +202,21 @@ The system automatically categorizes complaints:
    Create a `.env` file in the root directory:
    ```env
    GOOGLE_API_KEY=your_gemini_api_key_here
+   ASSEMBLYAI_API_KEY=your_assemblyai_api_key_here
    ```
 
-5. **Obtain Gemini API Key**
+5. **Obtain API Keys**
+   
+   **Google Gemini API Key:**
    - Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
    - Create a new API key
    - Copy the key to your `.env` file
+   
+   **AssemblyAI API Key:**
+   - Visit [AssemblyAI Console](https://www.assemblyai.com/app/account)
+   - Sign up for a free account if you don't have one
+   - Copy your API key from the dashboard
+   - Add it to your `.env` file
 
 ### Running the Application
 
@@ -225,12 +242,14 @@ streamlit run flask_app.py
 2. **Wrong Order**: "I received chicken instead of vegetarian food"  
 3. **Late Delivery**: "My order is 45 minutes late"
 4. **Escalation Request**: "I want to speak to a manager"
+5. **Voice Input**: Click the microphone button and speak your complaint
 
 **Expected Behavior:**
 - Agent requests photo evidence for visual issues
 - Logs feedback professionally without admitting fault
 - Offers conservative voucher compensation only when necessary
 - Escalates to appropriate customer care officers
+- Speech-to-text accurately transcribes voice input for editing
 
 ## 📁 Project Structure
 
@@ -268,8 +287,12 @@ This project is created for educational and demonstration purposes. Please ensur
 For questions or issues:
 1. Check the console logs for detailed error messages
 2. Verify your Gemini API key is correctly configured
-3. Ensure all dependencies are properly installed
-4. Review the sandbox database for realistic test data
+3. Verify your AssemblyAI API key is correctly configured
+4. Ensure all dependencies are properly installed
+5. Review the sandbox database for realistic test data
+6. **For microphone issues**: Ensure browser permissions allow microphone access
+
+**Note**: The speech-to-text feature requires microphone permissions in your browser. When prompted, please allow microphone access for voice input functionality.
 
 ## 🔮 Future Enhancements
 

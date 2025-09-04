@@ -609,6 +609,32 @@
             transform: scale(1.1);
         }
 
+        .mic-btn {
+            background: var(--grab-light-gray);
+            color: var(--grab-medium-gray);
+            height: 35px;
+            width: 35px;
+            margin-left: 8px;
+        }
+
+        .mic-btn:hover {
+            background: var(--grab-green);
+            color: var(--grab-white);
+            transform: scale(1.1);
+        }
+
+        .mic-btn.recording {
+            background: var(--grab-red);
+            color: var(--grab-white);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
         .send-btn {
             background: linear-gradient(135deg, var(--grab-green) 0%, var(--grab-dark-green) 100%);
             color: var(--grab-white);
@@ -749,6 +775,9 @@
                             required
                         ></textarea>
                         <div class="input-actions">
+                            <button type="button" class="input-btn mic-btn" id="micBtn" onclick="toggleRecording()">
+                                <i class="fas fa-microphone" id="micIcon"></i>
+                            </button>
                             <button type="button" class="input-btn attachment-btn" onclick="document.getElementById('imageInput').click()">
                                 <i class="fas fa-paperclip"></i>
                             </button>
@@ -1134,6 +1163,112 @@
             loadMessages();
             messageInput.focus();
         });
+
+        // Speech-to-text functionality
+        let isRecording = false;
+        let mediaRecorder;
+        let audioChunks = [];
+
+        async function toggleRecording() {
+            const micBtn = document.getElementById('micBtn');
+            const micIcon = document.getElementById('micIcon');
+
+            if (!isRecording) {
+                try {
+                    // Request microphone permission
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    // Start recording
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        await sendAudioForTranscription(audioBlob);
+                        
+                        // Stop all tracks to turn off microphone
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    
+                    // Update UI
+                    micBtn.classList.add('recording');
+                    micIcon.className = 'fas fa-stop';
+                    micBtn.title = 'Stop recording';
+                    
+                } catch (error) {
+                    console.error('Error starting recording:', error);
+                    alert('Unable to access microphone. Please check your browser permissions.');
+                }
+            } else {
+                // Stop recording
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+                
+                isRecording = false;
+                
+                // Update UI
+                micBtn.classList.remove('recording');
+                micIcon.className = 'fas fa-microphone';
+                micBtn.title = 'Start voice recording';
+            }
+        }
+
+        async function sendAudioForTranscription(audioBlob) {
+            try {
+                // Show loading state
+                const micBtn = document.getElementById('micBtn');
+                const micIcon = document.getElementById('micIcon');
+                micIcon.className = 'fas fa-spinner fa-spin';
+                micBtn.title = 'Transcribing...';
+                micBtn.disabled = true;
+
+                // Create form data
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.wav');
+
+                // Send to server for transcription
+                const response = await fetch('/transcribe_audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success && result.text) {
+                        // Add transcribed text to input box
+                        const messageInput = document.getElementById('messageInput');
+                        messageInput.value = result.text;
+                        messageInput.focus();
+                        
+                        // Auto-resize textarea
+                        messageInput.style.height = 'auto';
+                        messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+                    } else {
+                        alert('Transcription failed: ' + (result.error || 'Unknown error'));
+                    }
+                } else {
+                    alert('Failed to transcribe audio. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error transcribing audio:', error);
+                alert('Error transcribing audio. Please try again.');
+            } finally {
+                // Reset UI
+                const micBtn = document.getElementById('micBtn');
+                const micIcon = document.getElementById('micIcon');
+                micIcon.className = 'fas fa-microphone';
+                micBtn.title = 'Start voice recording';
+                micBtn.disabled = false;
+            }
+        }
     </script>
 </body>
 </html>

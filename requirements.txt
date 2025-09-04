@@ -2,6 +2,6 @@ python-dotenv
 langchain
 langchain-google-genai
 google-generativeai
-streamlit
 Pillow
 Flask
+assemblyai
